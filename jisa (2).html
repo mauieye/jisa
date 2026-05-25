@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="時差計算">
+<title>時差計算</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; overflow-x: hidden; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif; background: #f5f5f0; color: #1a1a1a; min-height: 100vh; padding: 12px; }
+.app { width: 100%; max-width: 480px; margin: 0 auto; padding-bottom: 40px; }
+h1 { font-size: 18px; font-weight: 500; text-align: center; margin: 12px 0 16px; color: #1a1a1a; }
+.section-label { font-size: 11px; font-weight: 500; color: #888; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 8px; }
+.card { background: #fff; border: 0.5px solid #ddd; border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; }
+.row { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+.row:last-child { margin-bottom: 0; }
+.label { font-size: 12px; color: #666; width: 44px; flex-shrink: 0; }
+.row select, .row input[type=date] {
+  flex: 1; font-size: 14px; min-width: 0;
+  border: 0.5px solid #ccc; border-radius: 8px;
+  padding: 7px 8px; background: #fafafa;
+  -webkit-appearance: none; appearance: none;
+  color: #1a1a1a; width: 100%;
+}
+.time-row { display: flex; gap: 4px; align-items: center; flex: 1; min-width: 0; }
+.time-row select { font-size: 14px; flex: 1; min-width: 0; }
+.time-sep { font-size: 18px; font-weight: 500; color: #666; flex-shrink: 0; }
+.now-btn {
+  font-size: 12px; padding: 7px 10px;
+  border-radius: 8px; border: 0.5px solid #ccc;
+  background: #f0f0ec; color: #555;
+  cursor: pointer; white-space: nowrap; flex-shrink: 0;
+}
+.now-btn:active { background: #e0e0dc; }
+.add-btn {
+  width: 100%; padding: 9px; font-size: 13px;
+  color: #888; border: 0.5px dashed #bbb;
+  border-radius: 8px; background: transparent;
+  cursor: pointer; margin-top: 4px;
+}
+.del-btn {
+  padding: 6px 10px; font-size: 16px;
+  border: 0.5px solid #ddd; border-radius: 8px;
+  background: transparent; color: #aaa;
+  cursor: pointer; flex-shrink: 0;
+}
+.calc-btn {
+  width: 100%; padding: 13px; font-size: 15px;
+  font-weight: 500; border-radius: 10px;
+  border: none; background: #1a1a1a; color: #fff;
+  cursor: pointer; margin-bottom: 14px;
+}
+.calc-btn:active { background: #333; }
+.result-card {
+  background: #fff; border: 0.5px solid #ddd;
+  border-radius: 12px; overflow: hidden; margin-bottom: 10px;
+}
+.result-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 9px 12px; border-bottom: 0.5px solid #eee;
+  background: #fafafa;
+}
+.result-city { font-size: 13px; font-weight: 500; color: #1a1a1a; }
+.result-diff { font-size: 11px; color: #888; }
+.result-body { padding: 10px 12px; }
+.result-time { font-size: 28px; font-weight: 300; color: #1a1a1a; font-variant-numeric: tabular-nums; }
+.result-date { font-size: 12px; color: #666; margin-top: 3px; }
+.dst-tag {
+  font-size: 10px; padding: 2px 6px; border-radius: 4px;
+  background: #e6f4ea; color: #2d7a3a;
+  margin-left: 6px; vertical-align: middle;
+}
+.no-result { font-size: 13px; color: #aaa; text-align: center; padding: 24px 0; }
+.result-label { font-size: 11px; font-weight: 500; color: #888; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 10px; margin-top: 4px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>時差計算</h1>
+
+  <div class="section-label">基準都市と日時</div>
+  <div class="card">
+    <div class="row">
+      <span class="label">都市</span>
+      <select id="base-city">
+        <option value="Asia/Tokyo">東京</option>
+        <option value="America/Vancouver">バンクーバー</option>
+        <option value="America/New_York">ニューヨーク</option>
+        <option value="America/Los_Angeles">ロサンゼルス</option>
+        <option value="America/Chicago">シカゴ</option>
+        <option value="Europe/London">ロンドン</option>
+        <option value="Europe/Paris">パリ</option>
+        <option value="Europe/Berlin">ベルリン</option>
+        <option value="Asia/Shanghai">上海</option>
+        <option value="Asia/Seoul">ソウル</option>
+        <option value="Asia/Singapore">シンガポール</option>
+        <option value="Asia/Dubai">ドバイ</option>
+        <option value="Australia/Sydney">シドニー</option>
+        <option value="Pacific/Honolulu">ホノルル</option>
+      </select>
+    </div>
+    <div class="row">
+      <span class="label">日付</span>
+      <input type="date" id="base-date">
+      <button class="now-btn" id="now-btn">⏱ 現在</button>
+    </div>
+    <div class="row">
+      <span class="label">時刻</span>
+      <div class="time-row">
+        <select id="base-hour"></select>
+        <span class="time-sep">:</span>
+        <select id="base-min"></select>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">変換先の都市</div>
+  <div class="card">
+    <div id="dest-rows"></div>
+    <button class="add-btn" id="add-city-btn">＋ 都市を追加</button>
+  </div>
+
+  <button class="calc-btn" id="calc-btn">時差を計算する</button>
+  <div id="results-area"></div>
+</div>
+
+<script>
+const CITY_LIST = [
+  ["America/Vancouver","バンクーバー"],
+  ["Asia/Tokyo","東京"],
+  ["America/New_York","ニューヨーク"],
+  ["America/Los_Angeles","ロサンゼルス"],
+  ["America/Chicago","シカゴ"],
+  ["Europe/London","ロンドン"],
+  ["Europe/Paris","パリ"],
+  ["Europe/Berlin","ベルリン"],
+  ["Asia/Shanghai","上海"],
+  ["Asia/Seoul","ソウル"],
+  ["Asia/Singapore","シンガポール"],
+  ["Asia/Dubai","ドバイ"],
+  ["Australia/Sydney","シドニー"],
+  ["Pacific/Honolulu","ホノルル"],
+];
+const DEFAULT_DESTS = ["America/Vancouver","America/New_York","Europe/London"];
+const MINUTES = [0,5,10,15,20,25,30,35,40,45,50,55];
+const WEEKDAYS = ['日','月','火','水','木','金','土'];
+let destCount = 0;
+
+function getOffsetMin(tz, utcDate) {
+  const fmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz,
+    year:'numeric', month:'2-digit', day:'2-digit',
+    hour:'2-digit', minute:'2-digit', second:'2-digit', hour12: false
+  });
+  const parts = Object.fromEntries(fmt.formatToParts(utcDate).map(p => [p.type, p.value]));
+  const localMs = Date.UTC(
+    parseInt(parts.year), parseInt(parts.month)-1, parseInt(parts.day),
+    parseInt(parts.hour) % 24, parseInt(parts.minute), parseInt(parts.second)
+  );
+  return Math.round((localMs - utcDate.getTime()) / 60000);
+}
+
+function localToUTC(tz, dateStr, hourStr, minStr) {
+  const naiveMs = Date.UTC(
+    parseInt(dateStr.slice(0,4)), parseInt(dateStr.slice(5,7))-1, parseInt(dateStr.slice(8,10)),
+    parseInt(hourStr), parseInt(minStr), 0
+  );
+  const offset = getOffsetMin(tz, new Date(naiveMs));
+  return new Date(naiveMs - offset * 60000);
+}
+
+function isDST(tz, utcDate) {
+  const yr = utcDate.getUTCFullYear();
+  const janOff = getOffsetMin(tz, new Date(Date.UTC(yr,0,15)));
+  const julOff = getOffsetMin(tz, new Date(Date.UTC(yr,6,15)));
+  return getOffsetMin(tz, utcDate) !== Math.min(janOff, julOff);
+}
+
+function fmtOffset(min) {
+  const sign = min >= 0 ? '+' : '-';
+  const abs = Math.abs(min);
+  const h = Math.floor(abs/60), m = abs%60;
+  return m === 0 ? `UTC${sign}${h}` : `UTC${sign}${h}:${String(m).padStart(2,'0')}`;
+}
+
+function fmtDiff(diffMin) {
+  if (diffMin === 0) return '時差なし';
+  const sign = diffMin >= 0 ? '+' : '-';
+  const abs = Math.abs(diffMin);
+  const h = Math.floor(abs/60), m = abs%60;
+  return m === 0 ? `${sign}${h}時間` : `${sign}${h}時間${m}分`;
+}
+
+function buildTimeSelects() {
+  const hourSel = document.getElementById('base-hour');
+  const minSel = document.getElementById('base-min');
+  for (let h = 0; h < 24; h++) {
+    const o = document.createElement('option');
+    o.value = String(h).padStart(2,'0');
+    o.textContent = String(h).padStart(2,'0') + '時';
+    hourSel.appendChild(o);
+  }
+  MINUTES.forEach(m => {
+    const o = document.createElement('option');
+    o.value = String(m).padStart(2,'0');
+    o.textContent = String(m).padStart(2,'0') + '分';
+    minSel.appendChild(o);
+  });
+}
+
+function makeDestRow(tzDefault) {
+  const id = ++destCount;
+  const div = document.createElement('div');
+  div.className = 'row';
+  div.style.marginBottom = '8px';
+  const sel = document.createElement('select');
+  sel.id = 'dest-' + id;
+  sel.style.cssText = 'flex:1;font-size:14px;min-width:0;border:0.5px solid #ccc;border-radius:8px;padding:7px 8px;background:#fafafa;-webkit-appearance:none;color:#1a1a1a;';
+  CITY_LIST.forEach(([tz, name]) => {
+    const o = document.createElement('option');
+    o.value = tz; o.textContent = name;
+    if (tz === tzDefault) o.selected = true;
+    sel.appendChild(o);
+  });
+  const del = document.createElement('button');
+  del.className = 'del-btn';
+  del.textContent = '×';
+  del.setAttribute('aria-label', '削除');
+  del.addEventListener('click', () => div.remove());
+  div.appendChild(sel);
+  div.appendChild(del);
+  return div;
+}
+
+function setNow() {
+  const now = new Date();
+  const baseTz = document.getElementById('base-city').value;
+  const localStr = now.toLocaleString('sv-SE', { timeZone: baseTz });
+  const [datePart, timePart] = localStr.split(' ');
+  document.getElementById('base-date').value = datePart;
+  const rawH = parseInt(timePart.slice(0,2));
+  const rawMin = parseInt(timePart.slice(3,5));
+  const snapped = MINUTES.reduce((prev, cur) => Math.abs(cur-rawMin) < Math.abs(prev-rawMin) ? cur : prev);
+  document.getElementById('base-hour').value = String(rawH).padStart(2,'0');
+  document.getElementById('base-min').value = String(snapped).padStart(2,'0');
+}
+
+function calculate() {
+  const baseTz = document.getElementById('base-city').value;
+  const dateVal = document.getElementById('base-date').value;
+  const hVal = document.getElementById('base-hour').value;
+  const mVal = document.getElementById('base-min').value;
+  if (!dateVal) {
+    document.getElementById('results-area').innerHTML = '<div class="no-result">日付を入力してください</div>';
+    return;
+  }
+  const baseUTC = localToUTC(baseTz, dateVal, hVal, mVal);
+  const baseOffNow = getOffsetMin(baseTz, baseUTC);
+  const destSelects = document.querySelectorAll('#dest-rows select');
+  if (destSelects.length === 0) {
+    document.getElementById('results-area').innerHTML = '<div class="no-result">変換先の都市を追加してください</div>';
+    return;
+  }
+  let html = '<div class="result-label">計算結果</div>';
+  destSelects.forEach(sel => {
+    const tz = sel.value;
+    const cityName = sel.options[sel.selectedIndex].textContent;
+    const destOffMin = getOffsetMin(tz, baseUTC);
+    const diffMin = destOffMin - baseOffNow;
+    const destDate = new Date(baseUTC.getTime() + destOffMin * 60000);
+    const dh = String(destDate.getUTCHours()).padStart(2,'0');
+    const dm = String(destDate.getUTCMinutes()).padStart(2,'0');
+    const dyr = destDate.getUTCFullYear();
+    const dmo = String(destDate.getUTCMonth()+1).padStart(2,'0');
+    const dd = String(destDate.getUTCDate()).padStart(2,'0');
+    const dw = WEEKDAYS[destDate.getUTCDay()];
+    const dst = isDST(tz, baseUTC);
+    html += `<div class="result-card">
+      <div class="result-header">
+        <span class="result-city">${cityName}${dst ? '<span class="dst-tag">夏時間</span>' : ''}</span>
+        <span class="result-diff">${fmtOffset(destOffMin)}　${fmtDiff(diffMin)}</span>
+      </div>
+      <div class="result-body">
+        <div class="result-time">${dh}:${dm}</div>
+        <div class="result-date">${dyr}/${dmo}/${dd} (${dw})</div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('results-area').innerHTML = html;
+}
+
+document.getElementById('now-btn').addEventListener('click', setNow);
+document.getElementById('base-city').addEventListener('change', () => {
+  if (document.getElementById('base-date').value) setNow();
+});
+document.getElementById('add-city-btn').addEventListener('click', () => {
+  document.getElementById('dest-rows').appendChild(makeDestRow("Asia/Tokyo"));
+});
+document.getElementById('calc-btn').addEventListener('click', calculate);
+
+buildTimeSelects();
+DEFAULT_DESTS.forEach(tz => document.getElementById('dest-rows').appendChild(makeDestRow(tz)));
+setNow();
+</script>
+</body>
+</html>
